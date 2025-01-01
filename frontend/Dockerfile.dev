@@ -1,0 +1,15 @@
+# frontend/Dockerfile.dev
+FROM node:20-alpine
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm install
+
+# No need to copy source code as we'll use volumes
+# No need to build as we'll run in dev mode
+
+EXPOSE 3001
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

@@ -1,0 +1,130 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    ports:
+      - 5050:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: postgres@admin.com
+      PGADMIN_DEFAULT_PASSWORD: postgres
+    depends_on:
+      - postgres
+
+  postgrest:
+    image: postgrest/postgrest:latest
+    container_name: postgrest
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@postgres:5432/postgres
+      PGRST_DB_SCHEMA: public # Schema to expose
+      PGRST_DB_ANON_ROLE: postgres # Database role for anonymous users
+      PGRST_SERVER_PORT: 8080 # Add this line
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # API Gateway
+  api_gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      POSTGREST_URL: http://postgrest:8080
+      AUTH_SERVICE_URL: http://auth_service:8081
+    volumes:
+      - ./api-gateway:/usr/src/app # Mount source code
+      - /usr/src/app/node_modules # Prevent overwriting node_modules
+    command: npx nodemon src/app.js # Use nodemon for hot reload
+    depends_on:
+      - postgrest
+
+  # Auth Service
+  auth_service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    expose:
+      - 8081
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: postgres
+      DB_PORT: 5432
+      JWT_SECRET: your_jwt_secret_key_here
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  graphql_service:
+    build:
+      context: ./graphql-service
+      dockerfile: Dockerfile
+    ports:
+      - "4001:4001"
+    environment:
+      NODE_ENV: development
+      GRAPHQL_URL: http://api_gateway:4001
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PORT: 5432
+    volumes:
+      - ./graphql-service:/usr/src/app # Mount source code
+      - /usr/src/app/node_modules # Prevent overwriting node_modules
+    command: npx nodemon src/app.js # Use nodemon for hot reload
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:80"
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:4000
+      CHOKIDAR_USEPOLLING: "true" # Enable polling for file changes in Docker
+    depends_on:
+      - api_gateway
+
+volumes:
+  postgres_data:
