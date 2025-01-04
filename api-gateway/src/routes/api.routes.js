@@ -44,14 +44,14 @@ module.exports = (app) => {
 
   // PostgREST Routes (Protected)
   app.use(
-    "/api",
+    "/postgrest",
     requestLogger,
     // verifyToken,
     createProxyMiddleware({
       target: process.env.POSTGREST_URL || "http://postgrest:8080",
       changeOrigin: true,
       pathRewrite: {
-        "^/api": "", // remove /api from the URL
+        "^/postgrest": "", // remove /api from the URL
       },
       onProxyReq: (proxyReq, req) => {
         // Add user context to PostgREST requests

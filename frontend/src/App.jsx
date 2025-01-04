@@ -13,7 +13,7 @@ function App() {
   useEffect(() => {
     (async () => {
 
-      const rawData = await fetch('http://localhost:4000/api/users')
+      const rawData = await fetch(import.meta.env.VITE_API_URL + '/api/users')
       const data = await rawData.json()
       console.log('data', data);
       setUsers(data)
