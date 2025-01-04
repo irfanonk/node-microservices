@@ -20,8 +20,10 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+console.log("req path", app.get("path"));
+
 app.get("/", (req, res) => {
-  res.redirect("/health");
+  res.json({ status: "welcome to api" });
 });
 // Health check
 app.get("/health", (req, res) => {

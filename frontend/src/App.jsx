@@ -13,10 +13,21 @@ function App() {
   useEffect(() => {
     (async () => {
 
-      const rawData = await fetch(import.meta.env.VITE_API_URL + '/api/users')
-      const data = await rawData.json()
-      console.log('data', data);
-      setUsers(data)
+      try {
+        const rawData = await fetch(import.meta.env.VITE_API_URL + '/api/users')
+        const data = await rawData.json()
+        console.log('data', data);
+        
+        if(Array.isArray(data)){
+          setUsers(data)
+        }
+        
+      } catch (error) {
+        console.log("error", error)
+        
+      }
+
+ 
       
     })()
 
@@ -27,7 +38,7 @@ function App() {
     <>
     <p>Users with rest api</p>
       <div>
-        {users.map((user) => (
+        {users?.map((user) => (
           <div style={{display:'flex', flexDirection:'row', gap:10}} key={user.id}>
             <p>{user.name},</p>
             <p>{user.email}</p>
