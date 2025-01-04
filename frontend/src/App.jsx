@@ -14,7 +14,7 @@ function App() {
     (async () => {
 
       try {
-        const rawData = await fetch('gate/postgrest/users')
+        const rawData = await fetch('api_gate/postgrest/users')
         const data = await rawData.json()
         console.log('data', data);
         
