@@ -14,14 +14,14 @@ function App() {
     (async () => {
 
       try {
-        const rawData = await fetch(import.meta.env.VITE_API_URL + '/api/users')
+        const rawData = await fetch('gate/postgrest/users')
         const data = await rawData.json()
         console.log('data', data);
         
         if(Array.isArray(data)){
           setUsers(data)
         }
-        
+
       } catch (error) {
         console.log("error", error)
         
