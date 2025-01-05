@@ -42,6 +42,36 @@ module.exports = (app) => {
     })
   );
 
+  app.use(
+    "/file",
+    requestLogger,
+    createLoggingProxy("/file", {
+      target: process.env.FILE_SERVICE_URL || "http://file_service:8082",
+      changeOrigin: true,
+      pathRewrite: {
+        "^/file": "", // remove /auth from the URL
+      },
+      logLevel: "debug",
+      onProxyReq: (proxyReq, req, res) => {
+        // Handle JSON payloads
+        if (req.body && Object.keys(req.body).length > 0) {
+          const bodyData = JSON.stringify(req.body);
+          proxyReq.setHeader("Content-Type", "application/json");
+          proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+          // Write the body to the proxyReq stream
+          proxyReq.write(bodyData);
+        }
+      },
+      // Add error handling
+      onError: (err, req, res) => {
+        console.error("file proxy Error:", err);
+        res
+          .status(500)
+          .json({ error: "file proxy Error", message: err.message });
+      },
+    })
+  );
+
   // PostgREST Routes (Protected)
   app.use(
     "/postgrest",

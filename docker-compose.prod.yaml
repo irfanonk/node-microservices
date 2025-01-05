@@ -108,6 +108,19 @@ services:
       postgres:
         condition: service_healthy
 
+  file_service:
+    build:
+      context: ./file-service
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./file-service:/usr/src/app
+      - file_uploads:/usr/src/app/upload
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+
   # React Frontend
   frontend:
     build:
@@ -120,7 +133,6 @@ services:
       - /usr/src/app/node_modules
     environment:
       API_GATEWAY_URL: http://api_gateway:4000
-      VITE_API_URL: http://localhost:4000
       CHOKIDAR_USEPOLLING: "true" # Enable polling for file changes in Docker
     depends_on:
       - api_gateway
@@ -138,3 +150,4 @@ services:
 
 volumes:
   postgres_data:
+  file_uploads:
