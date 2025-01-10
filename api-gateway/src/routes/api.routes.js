@@ -1,6 +1,7 @@
 // api-gateway/src/routes/api.routes.js
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const { verifyToken } = require("../middleware/auth.middleware");
+const { restrict } = require("../middleware/restrict.middleware");
 const { logger, requestLogger } = require("../logger");
 
 const fs = require("fs");
@@ -76,6 +77,7 @@ module.exports = (app) => {
   app.use(
     "/postgrest",
     requestLogger,
+    restrict,
     // verifyToken,
     createProxyMiddleware({
       target: process.env.POSTGREST_URL || "http://postgrest:8080",

@@ -1,5 +1,6 @@
 # src/app.py
 from fastapi import FastAPI, UploadFile, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import os
@@ -35,6 +36,28 @@ os.makedirs(PDF_DIR, exist_ok=True)
 # Allowed file extensions
 ALLOWED_IMAGE_TYPES = [".jpg", ".jpeg", ".png", ".gif"]
 ALLOWED_PDF_TYPES = [".pdf"]
+
+@app.get("/images/{filename}")
+async def get_image(filename: str):
+    logger.info(f"Request to get image: {filename}")
+    file_path = os.path.join(IMAGE_DIR, filename)
+    
+    if not os.path.exists(file_path):
+        logger.error(f"Image not found: {filename}")
+        raise HTTPException(status_code=404, detail="Image not found")
+    
+    return FileResponse(file_path)
+
+@app.get("/files/pdfs/{filename}")
+async def get_pdf(filename: str):
+    logger.info(f"Request to get PDF: {filename}")
+    file_path = os.path.join(PDF_DIR, filename)
+    
+    if not os.path.exists(file_path):
+        logger.error(f"PDF not found: {filename}")
+        raise HTTPException(status_code=404, detail="PDF not found")
+    
+    return FileResponse(file_path)
 
 @app.post("/upload/image")
 async def upload_image(file: UploadFile):
